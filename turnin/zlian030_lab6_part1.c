@@ -48,22 +48,22 @@ void TimerSet(unsigned long M) {
 }
 
 enum States {start, LED1, LED2, LED3} state;
-unsigned char flag = 0x01;
 /*unsigned char temp = 0x00;
 unsigned char temp2 = 0x00;*/
 void Tick();
 
 int main(void) {
-    DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
+
+//  DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
     DDRB = 0xFF; PORTB = 0x00; // Configure port B's 8 pins as outputs, initialize to 0s
     state = start;
-    TimerSet(38);
+    TimerSet(125);
     TimerOn();
     while (1) {
-		Tick();
-		while (!TimerFlag);
-			TimerFlag = 0;
-	}
+	Tick();
+	while (!TimerFlag);
+	TimerFlag = 0;
+    }
     return 1;
 }
 
@@ -75,30 +75,15 @@ void Tick() {
 	    PORTB = 0x01;
 	    break;
 	case LED1:
-		if(PINA == 0xFE) {
-			flag = (flag) ? 0x00 : 0x01;
-		}
-		else if(PINA != 0xFE && flag) {
-			state = LED2;
-		}
+	    state = LED2;
 	    PORTB = 0x01;
 	    break;
 	case LED2:
-		if(PINA == 0xFE) {
-			flag = (flag) ? 0x00 : 0x01;
-		}
-		else if(PINA != 0xFE && flag) {
-			state = LED3;
-		}
+	    state = LED3;
 	    PORTB = 0x02;
 	    break;
 	case LED3:
-		if(PINA == 0xFE) {
-			flag = (flag) ? 0x00 : 0x01;
-		}
-		else if(PINA != 0xFE && flag) {
-			state = LED1;
-		}
+	    state = LED1;
 	    PORTB = 0x04;
 	    break;
 	default:
