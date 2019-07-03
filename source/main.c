@@ -1,12 +1,12 @@
 /*	Author: zlian030
-*       Partner(s) Name: 
-*	Lab Section:
-*	Assignment: Lab #6  Exercise #1
-*	Exercise Description: [optional - include for your own benefit]
-*
-*	I acknowledge all content contained herein, excluding template or example
-*	code, is my own original work.
-*/
+ *  Partner(s) Name: 
+ *	Lab Section:
+ *	Assignment: Lab #6  Exercise #3
+ *	Exercise Description: [optional - include for your own benefit]
+ *
+ *	I acknowledge all content contained herein, excluding template or example
+ *	code, is my own original work.
+ */
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #ifdef _SIMULATE_
@@ -47,23 +47,23 @@ void TimerSet(unsigned long M) {
 	_avr_timer_cntcurr = _avr_timer_M;
 }
 
-enum States {start, LED1, LED2, LED3} state;
-unsigned char flag = 0x01;
-/*unsigned char temp = 0x00;
-unsigned char temp2 = 0x00;*/
+enum States {start, ADD, ADDwait, SUB, SUBwait, wait, reset} state;
+unsigned char temp = 0x07;
+unsigned char count = 0x00;
 void Tick();
 
 int main(void) {
-    DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
-    DDRB = 0xFF; PORTB = 0x00; // Configure port B's 8 pins as outputs, initialize to 0s
+
+DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
+DDRB = 0xFF; PORTB = 0x00; // Configure port C's 8 pins as outputs, initialize to 0s
     state = start;
     TimerSet(38);
     TimerOn();
     while (1) {
-		Tick();
 		while (!TimerFlag);
-			TimerFlag = 0;
-	}
+		TimerFlag = 0;
+		Tick();
+    }
     return 1;
 }
 
@@ -71,38 +71,85 @@ int main(void) {
 void Tick() {
     switch(state) {
 	case start:
-	    state = LED1;
-	    PORTB = 0x01;
+	    state = wait;
 	    break;
-	case LED1:
-		if(PINA == 0xFE) {
-			flag = (flag) ? 0x00 : 0x01;
-		}
-		else if(PINA != 0xFE && flag) {
-			state = LED2;
-		}
-	    PORTB = 0x01;
+	case ADD:
+	    state = ADDwait;
 	    break;
-	case LED2:
-		if(PINA == 0xFE) {
-			flag = (flag) ? 0x00 : 0x01;
-		}
-		else if(PINA != 0xFE && flag) {
-			state = LED3;
-		}
-	    PORTB = 0x02;
+	case ADDwait:
+	    if ((~PINA & 0x01) && (~PINA & 0x02)) {
+		state = reset;
+	    }
+	    else if (!(~PINA & 0x01) && (~PINA & 0x02)) {
+		state = SUB;
+	    }
+	    else if (!(~PINA & 0x01) && !(~PINA & 0x02)) {
+		state = wait;
+	    }
+	    else {
+		state = ADD;
+	    }
 	    break;
-	case LED3:
-		if(PINA == 0xFE) {
-			flag = (flag) ? 0x00 : 0x01;
-		}
-		else if(PINA != 0xFE && flag) {
-			state = LED1;
-		}
-	    PORTB = 0x04;
+	case SUB:
+	    state = SUBwait;
+	    break;
+	case SUBwait:
+            if ((~PINA & 0x01) && (~PINA & 0x02)) {
+                state = reset;
+            }
+            else if (!(~PINA & 0x02) && (~PINA & 0x01)) {
+                state = ADD;
+            }
+	    else if (!(~PINA & 0x01) && !(~PINA & 0x02)){
+		state = wait;
+	    }
+            else {
+                state = SUB;
+            }
+            break;
+        case wait:
+            if ((~PINA & 0x01) && (~PINA & 0x02)) {
+                state = reset;
+            }
+            else if (!(~PINA & 0x02) && (~PINA & 0x01)) {
+                state = ADD;
+            }
+	    else if (!(~PINA & 0x01) && (~PINA & 0x02)) {
+                state = SUB;
+            }
+	    else {
+		state = wait;
+	    } 
+            break;
+	case reset:
+	    state = wait;
 	    break;
 	default:
-		break;
-		    
-	}
+	    state = wait;
+	    break;
+    }
+
+    switch(state) {
+        case start:
+            break;
+        case ADD:
+            temp = (temp == 0x09) ? 0x09 : (temp + 0x01);
+            break;
+		case ADDwait:
+			break;
+        case SUB:
+			temp = (temp == 0x00) ? 0x00 : (temp - 0x01);
+            break;
+		case SUBwait:
+			break;
+        case wait:
+            break;
+		case reset:
+	    temp = 0x00;
+	    break;
+        default:
+            break;
+    }
+    
+    PORTB = temp;    
 }
