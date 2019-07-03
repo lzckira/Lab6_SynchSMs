@@ -26,10 +26,33 @@
 echo ======================================================\n
 echo Running all tests..."\n\n
 
-test "test 1"
-continue 210
-expectPORTB 0x07
-expect state wait
+test "2 loops to first led then 5 loops after on led 3"
+continue 2
+expectPORTB 0x01
+continue 5
+expectPORTB 0x04
+checkResult
+
+test "follow by 1 loop to led 1 and 1 more loop to led 2"
+continue 1
+expectPORTB 0x01
+continue 1
+expectPORTB 0x02
+checkResult
+
+test "led 3"
+continue 1
+expectPORTB 0x04
+checkResult
+
+test "led 1"
+continue 1
+expectPORTB 0x01
+checkResult
+
+test "led 2"
+continue 1
+expectPORTB 0x02
 checkResult
 
 

@@ -57,7 +57,7 @@ int main(void) {
 DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
 DDRB = 0xFF; PORTB = 0x00; // Configure port C's 8 pins as outputs, initialize to 0s
     state = start;
-    TimerSet(12);
+    TimerSet(38);
     TimerOn();
     while (1) {
 		while (!TimerFlag);

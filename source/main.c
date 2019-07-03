@@ -14,8 +14,8 @@
 #endif
 
 volatile unsigned char TimerFlag = 0;
-unsigned long _avr_timer_M = 1;
-unsigned long _avr_timer_cntcurr = 0;
+volatile unsigned long _avr_timer_M = 1;
+volatile unsigned long _avr_timer_cntcurr = 0;
 
 void TimerOn() {
 	TCCR1B = 0x0B;
@@ -47,28 +47,30 @@ void TimerSet(unsigned long M) {
 	_avr_timer_cntcurr = _avr_timer_M;
 }
 
-enum States {start, ADD, ADDwait, SUB, SUBwait, wait, reset} state;
-unsigned char temp = 0x07;
-unsigned char count = 0x00;
-void Tick();
+volatile enum States {start, ADD, ADDwait, SUB, SUBwait, wait, reset} state;
 
-int main(void) {
+volatile unsigned char temp = 0x07;
 
-DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
-DDRB = 0xFF; PORTB = 0x00; // Configure port C's 8 pins as outputs, initialize to 0s
+volatile unsigned char count = 0x00;
+
+volatile void Tick();
+
+volatile int main(void) {
+    DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
+    DDRB = 0xFF; PORTB = 0x00; // Configure port C's 8 pins as outputs, initialize to 0s
     state = start;
-    TimerSet(38);
+    TimerSet(300);
     TimerOn();
     while (1) {
-		while (!TimerFlag);
-		TimerFlag = 0;
-		Tick();
+	while (!TimerFlag) {};
+        TimerFlag = 0;
+        Tick();
     }
     return 1;
 }
 
 
-void Tick() {
+volatile void Tick() {
     switch(state) {
 	case start:
 	    state = wait;
@@ -87,7 +89,8 @@ void Tick() {
 		state = wait;
 	    }
 	    else {
-		state = ADD;
+		if (count < 10) { count++;}
+		else {state = ADD;}
 	    }
 	    break;
 	case SUB:
@@ -104,7 +107,8 @@ void Tick() {
 		state = wait;
 	    }
             else {
-                state = SUB;
+		if (count < 10) { count++;}
+                else {state = SUB;}
             }
             break;
         case wait:
@@ -134,17 +138,19 @@ void Tick() {
             break;
         case ADD:
             temp = (temp == 0x09) ? 0x09 : (temp + 0x01);
+	    count = 0x00;
             break;
-		case ADDwait:
-			break;
+	case ADDwait:
+	    break;
         case SUB:
-			temp = (temp == 0x00) ? 0x00 : (temp - 0x01);
-            break;
-		case SUBwait:
-			break;
+	    temp = (temp == 0x00) ? 0x00 : (temp - 0x01);
+            count = 0x00;
+	    break;
+	case SUBwait:
+	    break;
         case wait:
             break;
-		case reset:
+	case reset:
 	    temp = 0x00;
 	    break;
         default:
