@@ -53,9 +53,9 @@ volatile unsigned char temp = 0x07;
 
 volatile unsigned char count = 0x00;
 
-volatile void Tick();
+void Tick();
 
-volatile int main(void) {
+int main(void) {
     DDRA = 0x00; PORTA = 0xFF; // Configure port B's 8 pins as inputs
     DDRB = 0xFF; PORTB = 0x00; // Configure port C's 8 pins as outputs, initialize to 0s
     state = start;
@@ -70,7 +70,7 @@ volatile int main(void) {
 }
 
 
-volatile void Tick() {
+void Tick() {
     switch(state) {
 	case start:
 	    state = wait;
